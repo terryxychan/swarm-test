@@ -1,0 +1,9 @@
+# If you want to know more information about creating a compose file, please refer to this website: https://docs.docker.com/compose/
+version: '3.1'
+
+services:
+  template-server:
+    build: .
+    container_name: template-python-server
+    ports:
+      - 20005:5000

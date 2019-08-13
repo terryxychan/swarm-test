@@ -1,0 +1,63 @@
+# Use root/example as user/password credentials
+version: '3.7'
+
+services:
+  template_python_server_db:
+    image: 163.188.39.81:5000/template-python-server-db:dev.2
+    container_name: python-server
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: "0.1"
+          memory: 50M
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints: [node.labels.system == windows]
+    ports:
+      - 20001:5000
+    networks:
+      - mysql-database
+
+  template_mysql_server:
+    container_name: mysql-db
+    image: 163.188.39.81:5000/mysql:5.7.27
+    # image: mysql:5.7.27
+    volumes:
+      # Mount a local directory into the database to save the data locally. 
+      # For Windows:
+      - /c/Users/YChan14/Documents/templates/template-python-server-db/storage/mysql-datadir:/var/lib/mysql
+      # For Ubuntu:
+      # - /home/YChan14/swagger-test-template/template-python-server-db/storage/mysql-datadir:/var/lib/mysql
+      # Mount the sql file you need to /docker-entrypoint-initdb.d to automatically load the dump file
+      # For Windows
+      - /c/Users/YChan14/Documents/templates/template-python-server-db/server/database/template-databases.sql:/docker-entrypoint-initdb.d/template-databases.sql
+      # For Ubuntu
+      # - /home/YChan14/swagger-test-template/template-python-server-db/server/database/template-databases.sql:/docker-entrypoint-initdb.d/template-databases.sql
+    deploy:
+      placement:
+        constraints: [node.labels.system == windows]
+    ports:
+      - 3306:3306
+    environment:
+      - "MYSQL_ROOT_PASSWORD=123456"
+      # You will need to specify which database you want to load
+      - "MYSQL_DATABASE=template_db"
+    networks:
+      - mysql-database
+  
+  visualizer:
+    image: dockersamples/visualizer:stable
+    ports:
+      - "8090:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+    networks:
+      - mysql-database
+# Network settings here made sure that the services will connect to a network with the name: mysql-database-network
+networks:
+    mysql-database:

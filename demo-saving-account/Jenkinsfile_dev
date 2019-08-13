@@ -1,0 +1,106 @@
+#!/usr/bin/env groovy
+pipeline {
+	// Current dev branch CI workflow:
+	// 1. Push the code to dev branch,
+	// 2. Run unit tests and if successful, build docker container.
+	// 3. Tag and upload the container to registry with the <dev> tag.
+	// 4. Stop and delete containers and images built by this build
+	agent any
+	// parameters {
+	//     string(name: 'OUTLOOK_URL', defaultValue: 'https://outlook.office.com/webhook/d1346363-4d2a-4f6b-97e6-131c709fa6ce@41ff26dc-250f-4b13-8981-739be8610c21/JenkinsCI/e04a4f49181b49358fec297487197f70/d1346363-4d2a-4f6b-97e6-131c709fa6ce', description: 'This is the URL of the Outlook Webhook')
+	// }
+
+	//Prepopulating the environment
+	environment {
+		REPO = "default"
+		// PORT_NUMBER = "default"
+		VERSION = "default"
+		DEV_TAG = "dev"
+		REGISTRY_ADDR = "default"
+	}
+    // options {
+    //     office365ConnectorWebhooks([
+	//         [name: "Outlook", notifyBackToNormal: false, notifyFailure: false, notifyRepeatedFailure: false, notifySuccess: false, url:"${params.OUTLOOK_URL}"]
+    //     ])
+    // }
+
+	stages {
+	    stage("Clean initial environment"){
+			steps {
+                // Make sure the local environment is clean, deleting all stopped container and <none> images
+				sh "docker container prune -f"
+                sh "docker image prune -f"
+            }
+		}
+		stage("Get the environment variables"){
+			steps {
+				script {
+					// This reads the information from the release-config yaml file
+					def info = readYaml file:"release-config.yml"
+					VERSION = info.version
+					REPO = info.image_name
+					//PORT_NUMBER = info.port
+					REGISTRY_ADDR = info.docker_registry_url
+				}
+			}
+		}
+		stage("Build and run microservice"){
+			steps {
+			    // Build the microservice image
+				sh "docker build -t ${REPO}:${DEV_TAG}.${BUILD_NUMBER} ."
+				// Run the microservice
+				sh "docker run -d --name ${REPO}_${DEV_TAG} ${REPO}:${DEV_TAG}.${BUILD_NUMBER}"
+				// Copy test results to the Jenkins workspace
+				sh "docker cp ${REPO}_${DEV_TAG}:/usr/src/app/server/test/nosetests.xml ./server/test"
+
+			}
+		 }
+		
+		// stage("Run API functional test"){
+		//     steps {
+		//         // Build the API test image
+		// 		sh "docker build -t ${API_TEST_NAME}:${REPO}_${DEV_TAG} -f Dockerfile.api ."
+		// 		// Run the API test
+		// 		sh "docker run --name ${API_TEST_NAME}_${REPO}_${DEV_TAG} ${API_TEST_NAME}:${REPO}_${DEV_TAG}"
+		// 		// Copy the API test result to Jenkins workspace
+		// 		sh "docker cp ${API_TEST_NAME}_${REPO}_${DEV_TAG}:/usr/src/app/tests_api/nosetests.xml ./tests_api"
+		//     }
+		// }
+
+		stage("Upload to container registry"){
+		    steps {
+				// Stop the container
+		        sh "docker stop ${REPO}_${DEV_TAG}"
+				// Delete the container
+		        sh "docker container prune"
+				// Retag the image
+		        sh "docker tag ${REPO}:${DEV_TAG}.${BUILD_NUMBER} ${REGISTRY_ADDR}/${REPO}:${DEV_TAG}.${BUILD_NUMBER}"
+				// Push it to the registry
+		        sh "docker push ${REGISTRY_ADDR}/${REPO}:${DEV_TAG}.${BUILD_NUMBER}"
+		    }
+		}
+		stage("Housekeeping"){
+		    steps {
+				// Delete all of the container and images built during this build
+		        sh "docker rmi -f ${REGISTRY_ADDR}/${REPO}:${DEV_TAG}.${BUILD_NUMBER}"
+		        sh "docker rmi -f ${REPO}:${DEV_TAG}.${BUILD_NUMBER}"
+		        sh "docker rmi -f ${REPO}"
+		        // sh "docker rmi -f ${API_TEST_NAME}:${REPO}_${DEV_TAG}"
+		    }
+		}
+
+	}
+	post {
+	    always {
+        //  Saving the test reulst locally
+            junit (testResults:'**/*.xml')
+            deleteDir()
+        }
+        // success {
+        //     office365ConnectorSend status: "SUCCESS", message:"SUCCESS: To see more details: (<http://${SERVER_URL}:${SERVER_PORT}/job/${JOB_NAME}/${BUILD_NUMBER}/>)", webhookUrl:"${params.OUTLOOK_URL}"
+        // }
+        // failure {
+        //     office365ConnectorSend status: "FAILED", message:"FAILED: To see more details: (<http://${SERVER_URL}:${SERVER_PORT}/job/${JOB_NAME}/${BUILD_NUMBER}/>)", webhookUrl:"${params.OUTLOOK_URL}"
+        // }
+    }
+}

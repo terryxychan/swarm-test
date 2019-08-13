@@ -1,0 +1,11 @@
+# Before you commit, please fill in this file with the corresponding values. 
+
+# Versioning, major.minor 
+version: '1.0'
+
+# Image name (should be same as repository name)
+# This will be the name of the image when released to the docker container registry. Therefore, this has to be unique
+image_name: 'template-python-server'
+
+# Docker container registry URL:
+docker_registry_url: '163.188.39.81:5000'

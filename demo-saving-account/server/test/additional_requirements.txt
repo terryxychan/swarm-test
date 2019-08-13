@@ -1,0 +1,11 @@
+#
+####### example-requirements.txt #######
+#
+###### Requirements without Version Specifiers ######
+nosexcover
+coverage
+nose
+nose-watch
+connexion
+flask_testing
+###### Requirements with Version Specifiers ######

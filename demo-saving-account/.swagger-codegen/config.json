@@ -1,0 +1,5 @@
+{
+  "packageName" : "server",
+  "controllerPackage": "controller",
+  "serverPort": 5000
+}

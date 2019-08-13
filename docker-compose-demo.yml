@@ -1,0 +1,48 @@
+# Use root/example as user/password credentials
+version: '3.7'
+
+services:
+  checkingAccount:
+    image: terryxychan/checking-server:v5
+    # build: 
+    #   context: ./demo-checking-account
+    #   dockerfile: .
+    container_name: checking-server
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "0.1"
+          memory: 50M
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints: [node.labels.system == ubuntu16]
+    ports:
+      - 20002:5000
+    networks:
+      - demo-bank
+  
+  savingAccount:
+    image: terryxychan/saving-server:v5
+    # build: 
+    #   context: ./demo-saving-account
+    #   dockerfile: .
+    container_name: saving-server
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "0.1"
+          memory: 50M
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints: [node.labels.system == ubuntu18]
+    ports:
+      - 20003:5000
+    networks:
+      - demo-bank
+  
+networks:
+    demo-bank:

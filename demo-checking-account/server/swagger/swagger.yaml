@@ -1,0 +1,105 @@
+openapi: 3.0.1
+info:
+  title: checkng microservice
+  description: Checking microservice
+  contact:
+    email: YChan14@slb.com
+  version: 1.0.0
+servers:
+- url: http://localhost:20002/api/v1
+paths:
+  /checking:
+    get:
+      tags:
+      - checking
+      summary: Returns the current checking balance
+      operationId: checking_get
+      responses:
+        200:
+          description: Successfully calculated and returning result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Balance'
+      x-openapi-router-controller: server.controller.checking_controller
+    put:
+      tags:
+      - checking
+      summary: Deposit (or withdraw) money to (or from) your checking account
+      operationId: checking_put
+      requestBody:
+        description: Amount to deposit or withdraw
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Amount'
+        required: true
+      responses:
+        200:
+          description: Successfully calculated and returning result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Balance'
+        415:
+          description: Invalid Content-type (application/json), expected JSON data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-openapi-router-controller: server.controller.checking_controller
+  /saving:
+    get:
+      tags:
+      - saving
+      summary: Returns the current saving balance
+      operationId: saving_get
+      responses:
+        200:
+          description: Successfully calculated and returning result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Balance'
+      x-openapi-router-controller: server.controller.saving_controller
+components:
+  schemas:
+    Error:
+      required:
+      - error
+      - message
+      - status
+      type: object
+      properties:
+        status:
+          type: integer
+          description: The HTTP status of the error
+        error:
+          type: string
+          description: The error code of the occurred exception
+        message:
+          type: string
+          description: The message of the error - what went wrong
+        description:
+          type: string
+          description: A description how to fix the error or more details
+        href:
+          type: string
+          description: A link to further information about the error and how to fix
+    Amount:
+      type: object
+      properties:
+        amount:
+          type: number
+          description: Positive number to deposit and negative number to withdraw
+      example:
+        amount: 100.0
+    Balance:
+      type: object
+      properties:
+        balance:
+          type: number
+          description: Current bank account balance
+      example:
+        balance: 100.0
+

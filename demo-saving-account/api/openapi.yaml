@@ -1,0 +1,108 @@
+---
+swagger: "2.0"
+info:
+  description: "Checking microservice"
+  version: "1.0.0"
+  title: "checkng microservice"
+  contact:
+    email: "YChan14@slb.com"
+host: "localhost:20003"
+basePath: "/api/v1"
+schemes:
+- "http"
+paths:
+  /saving:
+    get:
+      tags:
+      - "saving"
+      summary: "Returns the current saving balance"
+      operationId: "saving_get"
+      produces:
+        - application/json
+      parameters: []
+      responses:
+        200:
+          description: "Successfully calculated and returning result"
+          schema:
+            $ref: "#/definitions/Balance"
+
+    put:
+      tags:
+      - "saving"
+      summary: "Deposit (or withdraw) money to (or from) your saving account"
+      operationId: "saving_put"
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+      - in: "body"
+        name: "amount"
+        description: "Amount to deposit or withdraw"
+        required: true
+        schema:
+          $ref: "#/definitions/Amount"
+      responses:
+        200:
+          description: "Successfully calculated and returning result"
+          schema:
+            $ref: "#/definitions/Balance"
+        415:
+          description: "Invalid Content-type (application/json), expected JSON data"
+          schema:
+            $ref: "#/definitions/Error"
+            
+  /checking:
+    get:
+      tags:
+      - "checking"
+      summary: "Returns the current checking balance"
+      operationId: "checking_get"
+      produces:
+        - application/json
+      parameters: []
+      responses:
+        200:
+          description: "Successfully calculated and returning result"
+          schema:
+            $ref: "#/definitions/Balance"
+            
+definitions:
+  Error:
+    type: "object"
+    required:
+    - "error"
+    - "message"
+    - "status"
+    properties:
+      status:
+        type: "integer"
+        description: "The HTTP status of the error"
+      error:
+        type: "string"
+        description: "The error code of the occurred exception"
+      message:
+        type: "string"
+        description: "The message of the error - what went wrong"
+      description:
+        type: "string"
+        description: "A description how to fix the error or more details"
+      href:
+        type: "string"
+        description: "A link to further information about the error and how to fix"
+  Amount:
+    type: "object"
+    properties:
+      amount:
+        type: "number"
+        description: "Positive number to deposit and negative number to withdraw"
+    example:
+      amount: 100.0
+  Balance:
+    type: "object"
+    properties:
+      balance:
+        type: "number"
+        description: "Current bank account balance"
+    example:
+      balance: 100.0
