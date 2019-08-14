@@ -3,10 +3,10 @@ version: '3.7'
 
 services:
   example_python_server_db:
-    image: 163.188.39.81:5000/template-python-server-db:dev.2
+    image: 163.188.39.81:5000/template-python-server-db:dev.4
     # container_name: python-server
     deploy:
-      replicas: 2
+      replicas: 4
       resources:
         limits:
           cpus: "0.1"
