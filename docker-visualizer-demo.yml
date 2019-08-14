@@ -1,0 +1,16 @@
+version: '3.7'
+
+services:  
+  visualizer:
+    image: dockersamples/visualizer:stable
+    ports:
+      - "8090:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+    networks:
+      - mysql-database
+networks:
+    mysql-database:
